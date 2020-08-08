@@ -1,5 +1,7 @@
 # fuente
 
+A simple tool for font file preview and extract on demand.
+
 ## Project setup
 ```
 yarn install
