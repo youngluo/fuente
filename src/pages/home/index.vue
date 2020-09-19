@@ -1,24 +1,62 @@
 <template>
-  <div class="home">
-    <h1>Welcome to Fuente</h1>
-    <input type="file" @change="onFileChange" accept=".ttf" />
-    <ul class="icons">
-      <li v-for="item in list" :key="item.unicode" class="icons-item">
+  <header class="header">
+    <h1 class="title">Fuente</h1>
+    <section class="section"></section>
+  </header>
+  <main class="main">
+    <div class="upload" v-if="!list.length">
+      <a-upload
+        :beforeUpload="() => false"
+        :showUploadList="false"
+        @change="onFileChange"
+      >
+        <div class="upload-container">
+          <upload-outlined style="font-size:30px" />
+          <p class="upload-description">点击或者拖拽字体文件到此区域</p>
+        </div>
+      </a-upload>
+    </div>
+    <ul class="icons" v-else>
+      <li
+        @click="onCopy(item.name)"
+        v-for="item in list"
+        :key="item.unicode"
+        class="icons-item"
+      >
         <div class="iconfont icon" v-html="item.unicode" />
         <div class="icon-name">{{ item.name }}</div>
         <div class="icon-unicode">{{ item.unicode }}</div>
       </li>
     </ul>
-  </div>
+  </main>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { UploadChangeParam, VcFile } from "ant-design-vue/types/upload";
 import opentype, { GlyphSet } from "opentype.js";
+import { defineComponent, ref } from "vue";
+import { UploadOutlined } from "@ant-design/icons-vue";
+import { message, Upload } from "ant-design-vue";
 
 export default defineComponent({
+  components: {
+    AUpload: Upload.Dragger,
+    UploadOutlined
+  },
   setup() {
     const list = ref<Array<{ name: string; unicode: string }>>([]);
+
+    const onCopy = (text: string) => {
+      const input = document.createElement("input");
+      document.body.appendChild(input);
+      input.setAttribute("value", text);
+      input.select();
+      if (document.execCommand("copy")) {
+        document.execCommand("copy");
+        message.success(`${text} 复制成功`);
+      }
+      document.body.removeChild(input);
+    };
 
     const getFontList = (glyphs: GlyphSet) => {
       const result = [];
@@ -48,8 +86,8 @@ export default defineComponent({
       document.body.append($style);
     };
 
-    const onFileChange = e => {
-      const file = e.target.files[0];
+    const onFileChange = (e: UploadChangeParam<VcFile>) => {
+      const { file } = e;
 
       const reader = new FileReader();
       reader.readAsArrayBuffer(file);
@@ -68,6 +106,7 @@ export default defineComponent({
 
     return {
       onFileChange,
+      onCopy,
       list
     };
   }
@@ -75,12 +114,40 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-.home {
+.header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  height: 60px;
+  padding: 0 40px;
+  background: #fff;
+  border-bottom: solid 1px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+}
+
+.main {
   text-align: center;
   max-width: 1600px;
   min-width: 1200px;
   margin: 0 auto;
-  padding: 40px 32px;
+  padding: 24px 32px;
+}
+
+.upload {
+  width: 500px;
+  margin: 8% auto 0;
+  &-container {
+    padding: 30px 0;
+  }
+  &-description {
+    margin-top: 30px;
+    font-size: 18px;
+  }
 }
 
 .icons {

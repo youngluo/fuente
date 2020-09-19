@@ -13,6 +13,11 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+body {
+  margin: 0;
+  background: #fff;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
