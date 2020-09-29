@@ -1,31 +1,47 @@
 <template>
   <header class="header">
     <h1 class="title">Fuente</h1>
-    <section class="section"></section>
+    <section class="section">
+      <Badge :count="icons.length">
+        <ShoppingCartOutlined style="font-size:24px" />
+      </Badge>
+    </section>
   </header>
   <main class="main">
     <div class="upload" v-if="!list.length">
-      <a-upload
+      <Upload
         :beforeUpload="() => false"
         :showUploadList="false"
         @change="onFileChange"
       >
         <div class="upload-container">
-          <upload-outlined style="font-size:30px" />
+          <UploadOutlined style="font-size:30px" />
           <p class="upload-description">点击或者拖拽字体文件到此区域</p>
         </div>
-      </a-upload>
+      </Upload>
     </div>
     <ul class="icons" v-else>
       <li
-        @click="onCopy(item.name)"
+        :class="{ 'icons-item-selected': icons.includes(item.name) }"
         v-for="item in list"
         :key="item.unicode"
         class="icons-item"
       >
-        <div class="iconfont icon" v-html="item.unicode" />
-        <div class="icon-name">{{ item.name }}</div>
-        <div class="icon-unicode">{{ item.unicode }}</div>
+        <div
+          @click="onAddCart(item.name)"
+          class="iconfont icon"
+          v-html="item.unicode"
+        />
+        <div @click="onCopy(item.name)" class="icon-name" title="点击复制">
+          {{ item.name }}
+        </div>
+        <div
+          @click="onCopy(item.unicode)"
+          class="icon-unicode"
+          title="点击复制"
+        >
+          {{ item.unicode }}
+        </div>
       </li>
     </ul>
   </main>
@@ -33,18 +49,27 @@
 
 <script lang="ts">
 import { UploadChangeParam, VcFile } from "ant-design-vue/types/upload";
-import opentype, { GlyphSet } from "opentype.js";
+import opentype, { GlyphSet, Glyph } from "opentype.js";
 import { defineComponent, ref } from "vue";
-import { UploadOutlined } from "@ant-design/icons-vue";
-import { message, Upload } from "ant-design-vue";
+import { UploadOutlined, ShoppingCartOutlined } from "@ant-design/icons-vue";
+import { message, Upload, Badge } from "ant-design-vue";
+
+interface Item {
+  unicode: string;
+  glyph: Glyph;
+  name: string;
+}
 
 export default defineComponent({
   components: {
-    AUpload: Upload.Dragger,
-    UploadOutlined
+    Upload: Upload.Dragger,
+    ShoppingCartOutlined,
+    UploadOutlined,
+    Badge
   },
   setup() {
-    const list = ref<Array<{ name: string; unicode: string }>>([]);
+    const list = ref<Array<Item>>([]);
+    const icons = ref<Array<string>>([]);
 
     const onCopy = (text: string) => {
       const input = document.createElement("input");
@@ -62,8 +87,9 @@ export default defineComponent({
       const result = [];
 
       for (let i = 0; i < glyphs.length; i++) {
-        const { name, unicode } = glyphs.get(i);
-        if (name) result.push({ name, unicode: `&#${unicode};` });
+        const glyph = glyphs.get(i);
+        const { name, unicode } = glyph;
+        if (name) result.push({ name, unicode: `&#${unicode};`, glyph });
       }
 
       return result;
@@ -104,10 +130,20 @@ export default defineComponent({
       };
     };
 
+    const onAddCart = (name: string) => {
+      if (icons.value.includes(name)) {
+        icons.value.splice(icons.value.indexOf(name), 1);
+      } else {
+        icons.value.push(name);
+      }
+    };
+
     return {
       onFileChange,
+      onAddCart,
       onCopy,
-      list
+      list,
+      icons
     };
   }
 });
@@ -128,6 +164,11 @@ export default defineComponent({
 .title {
   margin: 0;
   font-size: 28px;
+}
+
+.section {
+  flex: 1;
+  text-align: right;
 }
 
 .main {
@@ -155,16 +196,21 @@ export default defineComponent({
   flex-wrap: wrap;
   margin: 0;
   padding: 0;
+
   &-item {
     list-style: none;
-    box-sizing: border-box;
     flex: 0 0 12.5%;
-    margin-top: 24px;
+    box-sizing: border-box;
+    margin: 24px;
     padding: 10px;
+    user-select: none;
     cursor: pointer;
     transition: all 0.3s ease-in-out;
     &:hover {
       background-color: #f6f6f6;
+    }
+    &-selected {
+      border: dashed 1px currentColor;
     }
   }
 }
@@ -172,7 +218,15 @@ export default defineComponent({
 .icon {
   font-size: 32px;
   &-name {
-    margin: 12px 0 4px;
+    margin: 8px 0 4px;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  &-unicode {
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 @media screen and (max-width: 1500px) {
