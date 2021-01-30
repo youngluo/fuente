@@ -2,7 +2,7 @@
   <header class="header">
     <h1 class="title">Fuente</h1>
     <section class="section">
-      <Badge :count="icons.length">
+      <Badge :count="icons.length" @click="showDrawer" style="cursor:pointer">
         <ShoppingCartOutlined style="font-size:24px" />
       </Badge>
     </section>
@@ -45,14 +45,29 @@
       </li>
     </ul>
   </main>
+  <Drawer :visible="visible" @close="visible = false" :closable="false">
+    <header class="drawer-header">
+      <Badge :count="icons.length">
+        <ShoppingCartOutlined style="font-size:30px" />
+      </Badge>
+      <div class="drawer-clear" @click="icons = []">
+        <ClearOutlined style="font-size:18px" />
+        <span style="margin-left:6px">全部清除</span>
+      </div>
+    </header>
+    <Button shape="round" block>下载</Button>
+  </Drawer>
 </template>
 
 <script lang="ts">
-import { UploadChangeParam, VcFile } from "ant-design-vue/types/upload";
 import opentype, { GlyphSet, Glyph } from "opentype.js";
 import { defineComponent, ref } from "vue";
-import { UploadOutlined, ShoppingCartOutlined } from "@ant-design/icons-vue";
-import { message, Upload, Badge } from "ant-design-vue";
+import {
+  ShoppingCartOutlined,
+  UploadOutlined,
+  ClearOutlined
+} from "@ant-design/icons-vue";
+import { message, Upload, Badge, Drawer, Button } from "ant-design-vue";
 
 interface Item {
   unicode: string;
@@ -65,11 +80,15 @@ export default defineComponent({
     Upload: Upload.Dragger,
     ShoppingCartOutlined,
     UploadOutlined,
+    ClearOutlined,
+    Button,
+    Drawer,
     Badge
   },
   setup() {
-    const list = ref<Array<Item>>([]);
     const icons = ref<Array<string>>([]);
+    const list = ref<Array<Item>>([]);
+    const visible = ref(false);
 
     const onCopy = (text: string) => {
       const input = document.createElement("input");
@@ -112,7 +131,7 @@ export default defineComponent({
       document.body.append($style);
     };
 
-    const onFileChange = (e: UploadChangeParam<VcFile>) => {
+    const onFileChange = (e: any) => {
       const { file } = e;
 
       const reader = new FileReader();
@@ -138,12 +157,20 @@ export default defineComponent({
       }
     };
 
+    const showDrawer = () => {
+      if (icons.value.length > 0) {
+        visible.value = true;
+      }
+    };
+
     return {
       onFileChange,
+      showDrawer,
       onAddCart,
+      visible,
       onCopy,
-      list,
-      icons
+      icons,
+      list
     };
   }
 });
@@ -192,25 +219,25 @@ export default defineComponent({
 }
 
 .icons {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
   margin: 0;
   padding: 0;
+  list-style: none;
 
   &-item {
-    list-style: none;
-    flex: 0 0 12.5%;
     box-sizing: border-box;
     margin: 24px;
     padding: 10px;
     user-select: none;
     cursor: pointer;
-    transition: all 0.3s ease-in-out;
+    border: dashed 1px transparent;
+    transition: all 0.2s ease-in-out;
     &:hover {
       background-color: #f6f6f6;
     }
     &-selected {
-      border: dashed 1px currentColor;
+      border-color: currentColor;
     }
   }
 }
@@ -229,6 +256,22 @@ export default defineComponent({
     }
   }
 }
+
+.drawer {
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 50px;
+  }
+  &-clear {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    cursor: pointer;
+  }
+}
+
 @media screen and (max-width: 1500px) {
   .icons-item {
     flex: 0 0 20%;
